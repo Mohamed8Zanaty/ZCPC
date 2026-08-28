@@ -68,4 +68,13 @@ dependencies {
     // --- Hilt (Dependency Injection) ---
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+
+// Hilt Compose Navigation (for hiltViewModel)
+    implementation(libs.androidx.hilt.navigation.compose)
+
+// Coil for Image Loading
+    implementation(libs.coil.compose)
 }
