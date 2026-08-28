@@ -35,6 +35,7 @@ import java.nio.file.WatchEvent
 
 @Composable
 fun ProfileRoute(
+    modifier: Modifier,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -95,31 +96,36 @@ private fun ProfileCard(profile: UserProfile) {
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
-        AsyncImage(
-            model = profile.avatarUrl,
-            contentDescription = "Profile Avatar",
-            modifier = Modifier
-                .size(100.dp)
-                .clip(CircleShape)
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = profile.handle,
-            style = MaterialTheme.typography.displayLarge,
-            color = rankColor
-        )
-        Text(
-            text = profile.rank,
-            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-            color = rankColor
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
+        Column(
+            modifier = Modifier.padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            StateItem(label = "Rating", value = profile.currentRating.toString())
-            StateItem(label = "Max Rating", value = profile.maxRating.toString())
+            AsyncImage(
+                model = profile.avatarUrl,
+                contentDescription = "Profile Avatar",
+                modifier = Modifier
+                    .size(100.dp)
+                    .clip(CircleShape)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = profile.handle,
+                style = MaterialTheme.typography.displayLarge,
+                color = rankColor
+            )
+            Text(
+                text = profile.rank,
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                color = rankColor
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                StateItem(label = "Rating", value = profile.currentRating.toString())
+                StateItem(label = "Max Rating", value = profile.maxRating.toString())
+            }
         }
     }
 }

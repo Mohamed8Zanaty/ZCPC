@@ -72,9 +72,14 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 
-// Hilt Compose Navigation (for hiltViewModel)
+    // Hilt Compose Navigation (for hiltViewModel)
     implementation(libs.androidx.hilt.navigation.compose)
 
-// Coil for Image Loading
+    // Coil for Image Loading
     implementation(libs.coil.compose)
+
+    // Room
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
 }
