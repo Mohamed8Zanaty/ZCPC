@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import com.example.zcpc.core.design.theme.ZCPCTheme
+import com.example.zcpc.feature.contests.ContestsRoute
 import com.example.zcpc.feature.profile.ProfileRoute
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -21,7 +22,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             ZCPCTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    ProfileRoute(
+                    ContestsRoute(
                         modifier = Modifier.padding(innerPadding)
                     )
                 }

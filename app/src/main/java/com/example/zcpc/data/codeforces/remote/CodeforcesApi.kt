@@ -1,6 +1,7 @@
 package com.example.zcpc.data.codeforces.remote
 
 import com.example.zcpc.data.codeforces.remote.dto.CodeforcesResponse
+import com.example.zcpc.data.codeforces.remote.dto.ContestDto
 import com.example.zcpc.data.codeforces.remote.dto.UserDto
 import retrofit2.http.GET
 import retrofit2.http.Query
@@ -14,4 +15,9 @@ interface CodeforcesApi {
     suspend fun getUserInfo(
         @Query("handles") handles: String
     ): CodeforcesResponse<List<UserDto>>
+
+    @GET("contest.list")
+    suspend fun getContests(
+        @Query("gym") gym: Boolean = false
+    ): CodeforcesResponse<List<ContestDto>>
 }

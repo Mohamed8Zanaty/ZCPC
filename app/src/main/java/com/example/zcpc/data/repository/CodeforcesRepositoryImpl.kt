@@ -7,6 +7,8 @@ import com.example.zcpc.data.local.dao.UserDao
 import com.example.zcpc.data.local.entity.toDomain
 import com.example.zcpc.data.local.entity.toEntity
 import com.example.zcpc.data.mapper.toDomain
+import com.example.zcpc.domain.model.Contest
+import com.example.zcpc.domain.model.ContestPhase
 import com.example.zcpc.domain.model.UserProfile
 import com.example.zcpc.domain.repository.CodeforcesRepository
 import javax.inject.Inject
@@ -31,6 +33,28 @@ class CodeforcesRepositoryImpl @Inject constructor(
             NetworkResult.Success(cachedUser.toDomain())
         } else {
             NetworkResult.Error(code = 503, message = "No internet connection and no cached data available.")
+        }
+    }
+
+    override suspend fun getContests(): NetworkResult<List<Contest>> {
+        val response = safeApiCall { api.getContests() }
+
+        return when (response) {
+            is NetworkResult.Success -> {
+                val data = response.data
+                if (data.status == "OK" && data.result != null) {
+                    val contests = data.result
+                        .map { it.toDomain() }
+                        .filter { it.phase == ContestPhase.UPCOMING || it.phase == ContestPhase.RUNNING }
+                        .sortedBy { it.startTimeSeconds }
+
+                    NetworkResult.Success(contests)
+                } else {
+                    NetworkResult.Error(code = 400, message = data.comment ?: "API Error")
+                }
+            }
+            is NetworkResult.Error -> NetworkResult.Error(response.code, response.message)
+            is NetworkResult.Exception -> NetworkResult.Exception(response.e)
         }
     }
 }
