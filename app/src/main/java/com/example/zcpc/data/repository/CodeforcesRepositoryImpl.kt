@@ -4,6 +4,7 @@ import com.example.zcpc.core.network.NetworkResult
 import com.example.zcpc.core.network.safeApiCall
 import com.example.zcpc.data.codeforces.remote.CodeforcesApi
 import com.example.zcpc.data.local.dao.ContestDao
+import com.example.zcpc.data.local.dao.ProblemDao
 import com.example.zcpc.data.local.dao.UserDao
 import com.example.zcpc.data.local.entity.toDomain
 import com.example.zcpc.data.local.entity.toEntity
@@ -18,7 +19,8 @@ import javax.inject.Inject
 class CodeforcesRepositoryImpl @Inject constructor(
     private val api: CodeforcesApi,
     private val userDao: UserDao,
-    private val contestDao: ContestDao
+    private val contestDao: ContestDao,
+    private val problemDao: ProblemDao
 ) : CodeforcesRepository {
     override suspend fun getUserProfile(handle: String): NetworkResult<UserProfile> {
         val networkResponse = safeApiCall { api.getUserInfo(handle) }
@@ -63,28 +65,32 @@ class CodeforcesRepositoryImpl @Inject constructor(
     override suspend fun getSolvedProblems(handle: String): NetworkResult<List<SolvedProblem>> {
         val response = safeApiCall { api.getUserStatus(handle) }
 
-        return when(response) {
-            is NetworkResult.Success -> {
-                val data = response.data
-                if (data.status == "OK" && data.result != null) {
-                    val uniqueSolvedProblems = data.result
-                        .filter { it.verdict == "OK" } // Only Accepted submissions
-                        .distinctBy { it.problem.name } // Remove duplicate solves
-                        .map { dto ->
-                            SolvedProblem(
-                                name = dto.problem.name,
-                                rating = dto.problem.rating ?: 0,
-                                tags = dto.problem.tags
-                            )
-                        }
-                    NetworkResult.Success(uniqueSolvedProblems)
-                } else {
-                    NetworkResult.Error(code = 400, message = data.comment ?: "API Error")
-                }
+        if (response is NetworkResult.Success) {
+            val data = response.data
+            if (data.status == "OK" && data.result != null) {
+                val uniqueSolvedProblems = data.result
+                    .filter { it.verdict == "OK" }
+                    .distinctBy { it.problem.name }
+                    .map { dto ->
+                        SolvedProblem(
+                            name = dto.problem.name,
+                            rating = dto.problem.rating ?: 0,
+                            tags = dto.problem.tags
+                        )
+                    }
 
+                problemDao.clearAndInsertProblems(uniqueSolvedProblems.map { it.toEntity() })
+                return NetworkResult.Success(uniqueSolvedProblems)
             }
-            is NetworkResult.Error -> NetworkResult.Error(response.code, response.message)
-            is NetworkResult.Exception -> NetworkResult.Exception(response.e)
+        }
+        val cachedProblems = problemDao.getAllSolvedProblems()
+        return if (cachedProblems.isNotEmpty()) {
+            NetworkResult.Success(cachedProblems.map { it.toDomain() })
+        } else {
+            NetworkResult.Error(
+                code = 503,
+                message = "No internet connection and no cached problems available."
+            )
         }
     }
 }

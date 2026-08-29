@@ -9,6 +9,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -64,4 +65,44 @@ class ProblemsViewModel @Inject constructor(
             }
         }
     }
+
+    fun refreshProblems() {
+        val currentState = _uiState.value
+
+        if (currentState is ProblemsUiState.Success) {
+            if (currentState.isRefreshing) return
+            _uiState.update { currentState.copy(isRefreshing = true) }
+        } else {
+            _uiState.update { ProblemsUiState.Loading }
+        }
+
+        viewModelScope.launch {
+            val handle = userPreferences.userHandleFlow.first()
+            if (handle.isNullOrBlank()) return@launch
+
+            when (val result = repository.getSolvedProblems(handle)) {
+                is NetworkResult.Success -> {
+                    val problems = result.data
+
+                    val tagFrequencies = problems.flatMap { it.tags }
+                        .groupingBy { it }.eachCount().toList().sortedByDescending { it.second }
+
+                    val ratingDist = problems.filter { it.rating > 0 }
+                        .groupingBy { it.rating }.eachCount().toList().sortedBy { it.first }
+
+                    _uiState.update {
+                        ProblemsUiState.Success(
+                            totalSolved = problems.size,
+                            tagCounts = tagFrequencies,
+                            ratingDistribution = ratingDist,
+                            isRefreshing = false // Turn off the spinner
+                        )
+                    }
+                }
+                is NetworkResult.Error -> _uiState.update { ProblemsUiState.Error(result.message) }
+                is NetworkResult.Exception -> _uiState.update { ProblemsUiState.Error(result.e.localizedMessage ?: "Error") }
+            }
+        }
+    }
+
 }

@@ -5,7 +5,8 @@ sealed interface ProblemsUiState {
     data class Success(
         val totalSolved: Int,
         val tagCounts: List<Pair<String, Int>>,
-        val ratingDistribution: List<Pair<Int, Int>>
+        val ratingDistribution: List<Pair<Int, Int>>,
+        val isRefreshing: Boolean = false
     ) : ProblemsUiState
     data class Error(val message: String) : ProblemsUiState
 }
