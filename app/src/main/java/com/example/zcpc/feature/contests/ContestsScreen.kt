@@ -1,5 +1,6 @@
 package com.example.zcpc.feature.contests
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,10 +24,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.zcpc.core.util.openCustomTab
 import com.example.zcpc.domain.model.Contest
 import com.example.zcpc.domain.model.ContestPhase
 import java.nio.file.WatchEvent
@@ -40,11 +43,15 @@ fun ContestsRoute(
     viewModel: ContestsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
+    val context = LocalContext.current
     ContestsScreen(
         uiState = uiState,
         modifier = modifier,
-        onRetry = { viewModel.loadContests() }
+        onRetry = { viewModel.loadContests() },
+        onContestClick = { contestId ->
+            val url = "https://codeforces.com/contestRegistration/$contestId"
+            openCustomTab(context, url)
+        }
     )
 }
 
@@ -52,7 +59,8 @@ fun ContestsRoute(
 internal fun ContestsScreen(
     uiState: ContestsUiState,
     modifier: Modifier = Modifier,
-    onRetry: () -> Unit
+    onRetry: () -> Unit,
+    onContestClick: (Int) -> Unit
 ) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         when (uiState) {
@@ -71,7 +79,10 @@ internal fun ContestsScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(uiState.contests, key = { it.id }) { contest ->
-                        ContestCard(contest = contest)
+                        ContestCard(
+                            contest = contest,
+                            onClick = { onContestClick(contest.id) }
+                        )
                     }
                 }
             }
@@ -80,7 +91,10 @@ internal fun ContestsScreen(
 }
 
 @Composable
-private fun ContestCard(contest: Contest) {
+private fun ContestCard(
+    contest: Contest,
+    onClick: () -> Unit
+) {
     val formattedDate = remember(contest.startTimeSeconds) {
         val instant = Instant.ofEpochSecond(contest.startTimeSeconds)
         val formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy • hh:mm a")
@@ -94,7 +108,9 @@ private fun ContestCard(contest: Contest) {
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
