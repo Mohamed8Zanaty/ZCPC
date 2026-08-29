@@ -47,10 +47,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.zcpc.core.util.openCustomTab
 import com.example.zcpc.domain.model.SolvedProblem
 import kotlinx.coroutines.delay
 
@@ -76,6 +78,7 @@ internal fun ProblemsScreen(
     modifier: Modifier = Modifier,
     onRefresh: () -> Unit
 ) {
+    val context = LocalContext.current
     var selectedTag by remember { mutableStateOf<String?>(null) }
     Scaffold(
         modifier = modifier,
@@ -91,7 +94,11 @@ internal fun ProblemsScreen(
                         TagProblemsDialog(
                             tag = selectedTag!!,
                             problems = problemsForTag,
-                            onDismiss = { selectedTag = null }
+                            onDismiss = { selectedTag = null },
+                            onProblemClick = { contestId, index ->
+                                val url = "https://codeforces.com/problemset/problem/$contestId/$index"
+                                openCustomTab(context, url)
+                            }
                         )
                     }
                     PullToRefreshBox(
@@ -226,7 +233,8 @@ private fun RatingBarChart(distribution: List<Pair<Int, Int>>) {
 private fun TagProblemsDialog(
     tag: String,
     problems: List<SolvedProblem>,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onProblemClick: (contestId: Int, index: String) -> Unit
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -243,9 +251,18 @@ private fun TagProblemsDialog(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(problems, key = { it.name }) { problem ->
-                    Column(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                if(problem.contestId != null) {
+                                    onProblemClick(problem.contestId, problem.index)
+                                }
+                            }
+                            .padding(vertical = 8.dp)
+                    ) {
                         Text(
-                            text = problem.name,
+                            text = "${problem.contestId}${problem.index} - ${problem.name}",
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface

@@ -73,6 +73,8 @@ class CodeforcesRepositoryImpl @Inject constructor(
                     .distinctBy { it.problem.name }
                     .map { dto ->
                         SolvedProblem(
+                            contestId = dto.problem.contestId,
+                            index = dto.problem.index,
                             name = dto.problem.name,
                             rating = dto.problem.rating ?: 0,
                             tags = dto.problem.tags

@@ -7,12 +7,16 @@ import com.example.zcpc.domain.model.SolvedProblem
 @Entity(tableName = "solved_problems")
 data class SolvedProblemEntity(
     @PrimaryKey val name: String,
+    val contestId: Int?,
+    val index: String,
     val rating: Int,
     val tags: String
 )
 
 fun SolvedProblemEntity.toDomain(): SolvedProblem {
     return SolvedProblem(
+        contestId = contestId,
+        index = index,
         name = name,
         rating = rating,
         tags = if (tags.isBlank()) emptyList() else tags.split(",")
@@ -22,6 +26,8 @@ fun SolvedProblemEntity.toDomain(): SolvedProblem {
 fun SolvedProblem.toEntity(): SolvedProblemEntity {
     return SolvedProblemEntity(
         name = name,
+        contestId = contestId,
+        index = index,
         rating = rating,
         tags = tags.joinToString(separator = ",")
     )
