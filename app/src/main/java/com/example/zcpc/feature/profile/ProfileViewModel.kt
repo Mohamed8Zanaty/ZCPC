@@ -2,6 +2,7 @@ package com.example.zcpc.feature.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.zcpc.core.datastore.UserPreferences
 import com.example.zcpc.core.network.NetworkResult
 import com.example.zcpc.domain.repository.CodeforcesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,11 +15,21 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
-    private val repository: CodeforcesRepository
+    private val repository: CodeforcesRepository,
+    private val userPreferences: UserPreferences
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<ProfileUiState>(ProfileUiState.Initial)
     val uiState : StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
+    init {
+        viewModelScope.launch {
+            userPreferences.userHandleFlow.collect { savedHandle ->
+                if(!savedHandle.isNullOrBlank()) {
+                    loadProfile(savedHandle)
+                }
+            }
+        }
+    }
     fun loadProfile(handle: String) {
         if(_uiState.value is ProfileUiState.Loading) return
         _uiState.update { ProfileUiState.Loading }

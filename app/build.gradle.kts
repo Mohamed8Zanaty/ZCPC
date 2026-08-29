@@ -84,4 +84,5 @@ dependencies {
     ksp(libs.room.compiler)
 
     implementation(libs.navigation.compose)
+    implementation(libs.datastore.preferences)
 }

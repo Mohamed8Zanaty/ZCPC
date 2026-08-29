@@ -7,3 +7,9 @@ data object Profile
 
 @Serializable
 data object Contests
+
+@Serializable
+data object Setup
+
+@Serializable
+data object MainGraph

@@ -40,10 +40,6 @@ fun ProfileRoute(
 ) {
    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(Unit) {
-        viewModel.loadProfile("Zanaty_8")
-    }
-
     ProfileScreen(
         uiState = uiState,
         onRetry = { viewModel.loadProfile("Zanaty_8") }
