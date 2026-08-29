@@ -43,10 +43,18 @@ class ProblemsViewModel @Inject constructor(
                         .toList()
                         .sortedByDescending { it.second }
 
+                    val ratingDist = problems
+                        .filter { it.rating > 0 }
+                        .groupingBy { it.rating }
+                        .eachCount()
+                        .toList()
+                        .sortedBy { it.first }
+
                     _uiState.update {
                         ProblemsUiState.Success(
                             totalSolved = problems.size,
-                            tagCounts = tagFrequencies
+                            tagCounts = tagFrequencies,
+                            ratingDistribution = ratingDist
                         )
                     }
 
