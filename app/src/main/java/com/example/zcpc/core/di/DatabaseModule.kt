@@ -3,6 +3,7 @@ package com.example.zcpc.core.di
 import android.content.Context
 import androidx.room.Room
 import com.example.zcpc.data.local.AppDatabase
+import com.example.zcpc.data.local.dao.ContestDao
 import com.example.zcpc.data.local.dao.UserDao
 import dagger.Module
 import dagger.Provides
@@ -21,12 +22,20 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             "zcpc_db"
-        ).build()
+        )
+            .fallbackToDestructiveMigration(false)
+            .build()
     }
 
     @Provides
     @Singleton
     fun provideUserDao(appDatabase: AppDatabase): UserDao {
         return appDatabase.userDao
+    }
+
+    @Provides
+    @Singleton
+    fun provideContestDao(appDatabase: AppDatabase): ContestDao {
+        return appDatabase.contestDao
     }
 }

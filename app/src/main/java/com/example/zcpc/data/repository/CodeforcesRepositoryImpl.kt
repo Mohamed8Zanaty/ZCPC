@@ -3,6 +3,7 @@ package com.example.zcpc.data.repository
 import com.example.zcpc.core.network.NetworkResult
 import com.example.zcpc.core.network.safeApiCall
 import com.example.zcpc.data.codeforces.remote.CodeforcesApi
+import com.example.zcpc.data.local.dao.ContestDao
 import com.example.zcpc.data.local.dao.UserDao
 import com.example.zcpc.data.local.entity.toDomain
 import com.example.zcpc.data.local.entity.toEntity
@@ -15,7 +16,8 @@ import javax.inject.Inject
 
 class CodeforcesRepositoryImpl @Inject constructor(
     private val api: CodeforcesApi,
-    private val userDao: UserDao
+    private val userDao: UserDao,
+    private val contestDao: ContestDao
 ) : CodeforcesRepository {
     override suspend fun getUserProfile(handle: String): NetworkResult<UserProfile> {
         val networkResponse = safeApiCall { api.getUserInfo(handle) }
@@ -38,23 +40,22 @@ class CodeforcesRepositoryImpl @Inject constructor(
 
     override suspend fun getContests(): NetworkResult<List<Contest>> {
         val response = safeApiCall { api.getContests() }
+        if (response is NetworkResult.Success) {
+            val data = response.data
+            if (data.status == "OK" && data.result != null) {
+                val domainContests = data.result
+                    .map { it.toDomain() }
+                    .take(50)
 
-        return when (response) {
-            is NetworkResult.Success -> {
-                val data = response.data
-                if (data.status == "OK" && data.result != null) {
-                    val contests = data.result
-                        .map { it.toDomain() }
-                        .filter { it.phase == ContestPhase.UPCOMING || it.phase == ContestPhase.RUNNING }
-                        .sortedBy { it.startTimeSeconds }
-
-                    NetworkResult.Success(contests)
-                } else {
-                    NetworkResult.Error(code = 400, message = data.comment ?: "API Error")
-                }
+                contestDao.clearAndInsertContests(domainContests.map { it.toEntity() })
+                return NetworkResult.Success(domainContests)
             }
-            is NetworkResult.Error -> NetworkResult.Error(response.code, response.message)
-            is NetworkResult.Exception -> NetworkResult.Exception(response.e)
+        }
+        val cachedContests = contestDao.getAllContests()
+        return if (cachedContests.isNotEmpty()) {
+            NetworkResult.Success(cachedContests.map { it.toDomain() })
+        } else {
+            NetworkResult.Error(code = 503, message = "No internet connection and no cached contests available.")
         }
     }
 }
