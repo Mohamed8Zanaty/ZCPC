@@ -35,7 +35,7 @@ import java.nio.file.WatchEvent
 
 @Composable
 fun ProfileRoute(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
    val uiState by viewModel.uiState.collectAsStateWithLifecycle()

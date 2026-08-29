@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import com.example.zcpc.core.design.theme.ZCPCTheme
 import com.example.zcpc.feature.contests.ContestsRoute
 import com.example.zcpc.feature.profile.ProfileRoute
+import com.example.zcpc.ui.MainScreen
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -21,11 +22,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             ZCPCTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    ContestsRoute(
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                MainScreen()
             }
         }
     }
