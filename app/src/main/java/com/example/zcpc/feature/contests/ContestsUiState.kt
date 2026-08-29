@@ -11,7 +11,8 @@ sealed interface ContestsUiState {
     data object Loading : ContestsUiState
     data class Success(
         val contests: List<Contest>,
-        val currentFilter: ContestFilter = ContestFilter.ALL
+        val currentFilter: ContestFilter = ContestFilter.ALL,
+        val isRefreshing: Boolean = false
     ) : ContestsUiState {
         val filteredContests: List<Contest>
             get() = when(currentFilter){

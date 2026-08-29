@@ -21,6 +21,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -50,6 +51,7 @@ fun ContestsRoute(
         uiState = uiState,
         modifier = modifier,
         onRetry = { viewModel.loadContests() },
+        onRefresh = { viewModel.refreshContests() },
         onFilterSelected = { filter -> viewModel.setFilter(filter) },
         onContestClick = { contestId ->
             val url = "https://codeforces.com/contestRegistration/$contestId"
@@ -63,6 +65,7 @@ internal fun ContestsScreen(
     uiState: ContestsUiState,
     modifier: Modifier = Modifier,
     onRetry: () -> Unit,
+    onRefresh: () -> Unit,
     onFilterSelected: (ContestFilter) -> Unit,
     onContestClick: (Int) -> Unit
 ) {
@@ -106,16 +109,35 @@ internal fun ContestsScreen(
                             )
                         }
                     }
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        items(uiState.filteredContests, key = { it.id }) { contest ->
-                            ContestCard(
-                                contest = contest,
-                                onClick = { onContestClick(contest.id) }
+                    if (uiState.filteredContests.isEmpty()) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "No contests found for this filter.",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                        }
+                    } else {
+                        PullToRefreshBox(
+                            isRefreshing = uiState.isRefreshing,
+                            onRefresh = onRefresh,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                items(uiState.filteredContests, key = { it.id }) { contest ->
+                                    ContestCard(
+                                        contest = contest,
+                                        onClick = { onContestClick(contest.id) }
+                                    )
+                                }
+                            }
                         }
                     }
                 }

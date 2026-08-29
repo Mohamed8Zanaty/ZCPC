@@ -47,4 +47,35 @@ class ContestsViewModel @Inject constructor(
             _uiState.update { currentState.copy(currentFilter = filter) }
         }
     }
+
+    fun refreshContests() {
+        val currentState = _uiState.value
+
+        if(currentState is ContestsUiState.Success) {
+            if(currentState.isRefreshing) return
+            _uiState.update { currentState.copy(isRefreshing = true) }
+        } else {
+            _uiState.update { ContestsUiState.Loading }
+        }
+
+        viewModelScope.launch {
+            when(val result = repository.getContests()) {
+                is NetworkResult.Success -> {
+                    _uiState.update {
+                        ContestsUiState.Success(
+                            contests = result.data,
+                            currentFilter = (currentState as? ContestsUiState.Success)?.currentFilter ?: ContestFilter.ALL,
+                            isRefreshing = false
+                        )
+                    }
+                }
+                is NetworkResult.Error -> {
+                    _uiState.update { ContestsUiState.Error(result.message) }
+                }
+                is NetworkResult.Exception -> {
+                    _uiState.update { ContestsUiState.Error(result.e.localizedMessage ?: "Error") }
+                }
+            }
+        }
+    }
 }

@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -22,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -64,7 +67,8 @@ fun ProfileRoute(
         ProfileScreen(
             uiState = uiState,
             modifier = Modifier.padding(innerPadding),
-            onRetry = { viewModel.loadProfile("Zanaty_8") }
+            onRetry = { viewModel.loadProfile("Zanaty_8") },
+            onRefresh = { handle -> viewModel.refreshProfile(handle) }
         )
     }
 }
@@ -73,7 +77,8 @@ fun ProfileRoute(
 internal fun ProfileScreen(
     uiState: ProfileUiState,
     modifier: Modifier = Modifier,
-    onRetry: () -> Unit
+    onRetry: () -> Unit,
+    onRefresh: (String) -> Unit
 ) {
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -98,7 +103,21 @@ internal fun ProfileScreen(
                 }
             }
             is ProfileUiState.Success -> {
-                ProfileCard(profile = uiState.profile)
+                PullToRefreshBox(
+                    isRefreshing = uiState.isRefreshing,
+                    onRefresh = { onRefresh(uiState.profile.handle) },
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        ProfileCard(profile = uiState.profile)
+                    }
+                }
             }
         }
     }
