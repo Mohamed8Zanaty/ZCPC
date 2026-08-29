@@ -49,4 +49,10 @@ class ProfileViewModel @Inject constructor(
             }
         }
     }
+    fun clearHandle() {
+        viewModelScope.launch {
+            userPreferences.clearHandle()
+            _uiState.update { ProfileUiState.Initial }
+        }
+    }
 }

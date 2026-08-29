@@ -28,4 +28,10 @@ class UserPreferences @Inject constructor(
             preferences[HANDLE_KEY] = handle
         }
     }
+
+    suspend fun clearHandle() {
+        context.dataStore.edit { preferences ->
+            preferences.remove(HANDLE_KEY)
+        }
+    }
 }

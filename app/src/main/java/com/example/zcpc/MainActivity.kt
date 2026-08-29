@@ -38,27 +38,21 @@ class MainActivity : ComponentActivity() {
         setContent {
             ZCPCTheme {
                 val handle by userPreferences.userHandleFlow.collectAsState(initial = null)
-                val navController = rememberNavController()
-                if (handle == null) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
+                when {
+                    handle == null -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator()
+                        }
                     }
-                } else {
-                    val startDest = if (handle!!.isEmpty()) Setup else MainGraph
+                    handle!!.isEmpty() -> {
+                        SetupRoute(
+                            onNavigateToMain = {
 
-                    NavHost(navController = navController, startDestination = startDest) {
-                        composable<Setup> {
-                            SetupRoute(
-                                onNavigateToMain = {
-                                    navController.navigate(MainGraph) {
-                                        popUpTo(Setup) { inclusive = true }
-                                    }
-                                }
-                            )
-                        }
-                        composable<MainGraph> {
-                            MainScreen()
-                        }
+                            }
+                        )
+                    }
+                    else -> {
+                        MainScreen()
                     }
                 }
             }
