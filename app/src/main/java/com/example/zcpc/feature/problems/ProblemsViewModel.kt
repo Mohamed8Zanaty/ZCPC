@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.zcpc.core.datastore.UserPreferences
 import com.example.zcpc.core.network.NetworkResult
+import com.example.zcpc.domain.model.SolvedProblem
 import com.example.zcpc.domain.repository.CodeforcesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -51,11 +52,21 @@ class ProblemsViewModel @Inject constructor(
                         .toList()
                         .sortedBy { it.first }
 
+                    val groupedByTag = mutableMapOf<String, MutableList<SolvedProblem>>()
+                    problems.forEach { problem ->
+                        problem.tags.forEach { tag ->
+                            groupedByTag.getOrPut(tag) { mutableListOf() }.add(problem)
+                        }
+                    }
+                    val sortedProblemsByTag = groupedByTag.mapValues { (_, problemList) ->
+                        problemList.sortedByDescending { it.rating }
+                    }
                     _uiState.update {
                         ProblemsUiState.Success(
                             totalSolved = problems.size,
                             tagCounts = tagFrequencies,
-                            ratingDistribution = ratingDist
+                            ratingDistribution = ratingDist,
+                            problemsByTag = sortedProblemsByTag
                         )
                     }
 
@@ -84,17 +95,35 @@ class ProblemsViewModel @Inject constructor(
                 is NetworkResult.Success -> {
                     val problems = result.data
 
-                    val tagFrequencies = problems.flatMap { it.tags }
-                        .groupingBy { it }.eachCount().toList().sortedByDescending { it.second }
+                    val tagFrequencies = problems
+                        .flatMap { it.tags }
+                        .groupingBy { it }
+                        .eachCount()
+                        .toList()
+                        .sortedByDescending { it.second }
 
-                    val ratingDist = problems.filter { it.rating > 0 }
-                        .groupingBy { it.rating }.eachCount().toList().sortedBy { it.first }
+                    val ratingDist = problems
+                        .filter { it.rating > 0 }
+                        .groupingBy { it.rating }
+                        .eachCount()
+                        .toList()
+                        .sortedBy { it.first }
 
+                    val groupedByTag = mutableMapOf<String, MutableList<SolvedProblem>>()
+                    problems.forEach { problem ->
+                        problem.tags.forEach { tag ->
+                            groupedByTag.getOrPut(tag) { mutableListOf() }.add(problem)
+                        }
+                    }
+                    val sortedProblemsByTag = groupedByTag.mapValues { (_, problemList) ->
+                        problemList.sortedByDescending { it.rating }
+                    }
                     _uiState.update {
                         ProblemsUiState.Success(
                             totalSolved = problems.size,
                             tagCounts = tagFrequencies,
                             ratingDistribution = ratingDist,
+                            problemsByTag = sortedProblemsByTag,
                             isRefreshing = false // Turn off the spinner
                         )
                     }

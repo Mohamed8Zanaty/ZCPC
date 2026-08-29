@@ -1,9 +1,11 @@
 package com.example.zcpc.feature.problems
 
+import android.app.AlertDialog
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -23,13 +26,16 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -45,6 +51,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.zcpc.domain.model.SolvedProblem
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -69,6 +76,7 @@ internal fun ProblemsScreen(
     modifier: Modifier = Modifier,
     onRefresh: () -> Unit
 ) {
+    var selectedTag by remember { mutableStateOf<String?>(null) }
     Scaffold(
         modifier = modifier,
         topBar = { TopAppBar(title = { Text("Problem Stats") }) }
@@ -78,7 +86,14 @@ internal fun ProblemsScreen(
                 is ProblemsUiState.Loading -> CircularProgressIndicator()
                 is ProblemsUiState.Error -> Text(text = uiState.message, color = MaterialTheme.colorScheme.error)
                 is ProblemsUiState.Success -> {
-
+                    if (selectedTag != null) {
+                        val problemsForTag = uiState.problemsByTag[selectedTag] ?: emptyList()
+                        TagProblemsDialog(
+                            tag = selectedTag!!,
+                            problems = problemsForTag,
+                            onDismiss = { selectedTag = null }
+                        )
+                    }
                     PullToRefreshBox(
                         isRefreshing = uiState.isRefreshing,
                         onRefresh = onRefresh,
@@ -121,7 +136,10 @@ internal fun ProblemsScreen(
 
                             // Grid of Tags
                             items(uiState.tagCounts) { (tag, count) ->
-                                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                                Card(
+                                    modifier = Modifier.clickable { selectedTag = tag },
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                                ) {
                                     Column(modifier = Modifier.padding(16.dp)) {
                                         Text(text = tag.replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
                                         Text(text = "$count solved", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -203,4 +221,51 @@ private fun RatingBarChart(distribution: List<Pair<Int, Int>>) {
             }
         }
     }
+}
+@Composable
+private fun TagProblemsDialog(
+    tag: String,
+    problems: List<SolvedProblem>,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = tag.replaceFirstChar { it.uppercase() } + " Problems",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(problems, key = { it.name }) { problem ->
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = problem.name,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        if (problem.rating > 0) {
+                            Text(
+                                text = "Rating: ${problem.rating}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                    Divider(modifier = Modifier.padding(top = 12.dp), color = MaterialTheme.colorScheme.surfaceVariant)
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
 }
