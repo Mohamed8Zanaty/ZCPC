@@ -26,8 +26,8 @@ This project strictly follows the **Clean Architecture** pattern (Data ↔ Domai
 
 ## 📸 Screenshots
 <p align="center">
-  <img src="docs/profile.png" width="250">
-  <img src="docs/contests.png" width="250">
+  <img src="doc/profile.png" width="250">
+  <img src="doc/contests.png" width="250">
 </p>
 
 ## 🚀 How to Run
