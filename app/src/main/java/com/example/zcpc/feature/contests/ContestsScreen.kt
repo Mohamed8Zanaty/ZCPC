@@ -12,11 +12,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -48,6 +50,7 @@ fun ContestsRoute(
         uiState = uiState,
         modifier = modifier,
         onRetry = { viewModel.loadContests() },
+        onFilterSelected = { filter -> viewModel.setFilter(filter) },
         onContestClick = { contestId ->
             val url = "https://codeforces.com/contestRegistration/$contestId"
             openCustomTab(context, url)
@@ -60,6 +63,7 @@ internal fun ContestsScreen(
     uiState: ContestsUiState,
     modifier: Modifier = Modifier,
     onRetry: () -> Unit,
+    onFilterSelected: (ContestFilter) -> Unit,
     onContestClick: (Int) -> Unit
 ) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -73,16 +77,46 @@ internal fun ContestsScreen(
                 }
             }
             is ContestsUiState.Success -> {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(uiState.contests, key = { it.id }) { contest ->
-                        ContestCard(
-                            contest = contest,
-                            onClick = { onContestClick(contest.id) }
-                        )
+                Column(modifier = Modifier.fillMaxSize()) {
+                    LazyRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        item {
+                            FilterChip(
+                                selected = uiState.currentFilter == ContestFilter.ALL,
+                                onClick = { onFilterSelected(ContestFilter.ALL) },
+                                label = { Text("All") }
+                            )
+                        }
+                        item {
+                            FilterChip(
+                                selected = uiState.currentFilter == ContestFilter.UPCOMING,
+                                onClick = { onFilterSelected(ContestFilter.UPCOMING) },
+                                label = { Text("Upcoming") }
+                            )
+                        }
+                        item {
+                            FilterChip(
+                                selected = uiState.currentFilter == ContestFilter.RUNNING,
+                                onClick = { onFilterSelected(ContestFilter.RUNNING) },
+                                label = { Text("Running") }
+                            )
+                        }
+                    }
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(uiState.filteredContests, key = { it.id }) { contest ->
+                            ContestCard(
+                                contest = contest,
+                                onClick = { onContestClick(contest.id) }
+                            )
+                        }
                     }
                 }
             }
