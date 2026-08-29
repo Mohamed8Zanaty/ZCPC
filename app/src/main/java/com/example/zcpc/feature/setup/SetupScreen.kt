@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,46 +30,51 @@ fun SetupRoute(
     viewModel: SetupViewModel = hiltViewModel()
 ) {
     var handleInput by remember { mutableStateOf("") }
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
     ) {
-        Text(
-            text = "Welcome to ZCPC",
-            style = MaterialTheme.typography.displaySmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Enter your Codeforces handle to get started.",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(32.dp))
-
-        OutlinedTextField(
-            value = handleInput,
-            onValueChange = { handleInput = it },
-            label = { Text("Codeforces Handle") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
-        Button(
-            onClick = {
-                if (handleInput.isNotBlank()) {
-                    viewModel.saveHandle(handleInput)
-                    onNavigateToMain()
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = handleInput.isNotBlank()
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Text("Continue")
+            Text(
+                text = "Welcome to ZCPC",
+                style = MaterialTheme.typography.displaySmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Enter your Codeforces handle to get started.",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(32.dp))
+
+            OutlinedTextField(
+                value = handleInput,
+                onValueChange = { handleInput = it },
+                label = { Text("Codeforces Handle") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            Button(
+                onClick = {
+                    if (handleInput.isNotBlank()) {
+                        viewModel.saveHandle(handleInput)
+                        onNavigateToMain()
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = handleInput.isNotBlank()
+            ) {
+                Text("Continue")
+            }
         }
     }
-
 }
