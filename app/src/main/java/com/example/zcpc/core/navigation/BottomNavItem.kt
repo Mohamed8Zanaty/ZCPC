@@ -18,5 +18,10 @@ val bottomNavItems = listOf(
         title = "Contests",
         icon = R.drawable.date_range,
         route = Contests
+    ),
+    BottomNavItem(
+        title = "Problems",
+        icon = R.drawable.list,
+        route = Problems
     )
 )

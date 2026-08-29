@@ -10,6 +10,7 @@ import com.example.zcpc.data.local.entity.toEntity
 import com.example.zcpc.data.mapper.toDomain
 import com.example.zcpc.domain.model.Contest
 import com.example.zcpc.domain.model.ContestPhase
+import com.example.zcpc.domain.model.SolvedProblem
 import com.example.zcpc.domain.model.UserProfile
 import com.example.zcpc.domain.repository.CodeforcesRepository
 import javax.inject.Inject
@@ -56,6 +57,34 @@ class CodeforcesRepositoryImpl @Inject constructor(
             NetworkResult.Success(cachedContests.map { it.toDomain() })
         } else {
             NetworkResult.Error(code = 503, message = "No internet connection and no cached contests available.")
+        }
+    }
+
+    override suspend fun getSolvedProblems(handle: String): NetworkResult<List<SolvedProblem>> {
+        val response = safeApiCall { api.getUserStatus(handle) }
+
+        return when(response) {
+            is NetworkResult.Success -> {
+                val data = response.data
+                if (data.status == "OK" && data.result != null) {
+                    val uniqueSolvedProblems = data.result
+                        .filter { it.verdict == "OK" } // Only Accepted submissions
+                        .distinctBy { it.problem.name } // Remove duplicate solves
+                        .map { dto ->
+                            SolvedProblem(
+                                name = dto.problem.name,
+                                rating = dto.problem.rating ?: 0,
+                                tags = dto.problem.tags
+                            )
+                        }
+                    NetworkResult.Success(uniqueSolvedProblems)
+                } else {
+                    NetworkResult.Error(code = 400, message = data.comment ?: "API Error")
+                }
+
+            }
+            is NetworkResult.Error -> NetworkResult.Error(response.code, response.message)
+            is NetworkResult.Exception -> NetworkResult.Exception(response.e)
         }
     }
 }

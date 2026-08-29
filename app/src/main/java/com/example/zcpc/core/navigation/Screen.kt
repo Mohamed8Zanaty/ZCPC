@@ -13,3 +13,6 @@ data object Setup
 
 @Serializable
 data object MainGraph
+
+@Serializable
+data object Problems

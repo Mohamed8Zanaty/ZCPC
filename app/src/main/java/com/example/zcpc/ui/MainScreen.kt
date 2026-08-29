@@ -23,9 +23,11 @@ import androidx.navigation.compose.rememberNavController
 import androidx.savedstate.savedState
 import com.example.zcpc.core.navigation.BottomNavItem
 import com.example.zcpc.core.navigation.Contests
+import com.example.zcpc.core.navigation.Problems
 import com.example.zcpc.core.navigation.Profile
 import com.example.zcpc.core.navigation.bottomNavItems
 import com.example.zcpc.feature.contests.ContestsRoute
+import com.example.zcpc.feature.problems.ProblemsRoute
 import com.example.zcpc.feature.profile.ProfileRoute
 
 @SuppressLint("RestrictedApi")
@@ -73,6 +75,10 @@ fun MainScreen(modifier: Modifier = Modifier) {
             composable<Contests> {
                 ContestsRoute()
             }
+            composable<Problems> {
+                ProblemsRoute()
+            }
+
         }
     }
 }
