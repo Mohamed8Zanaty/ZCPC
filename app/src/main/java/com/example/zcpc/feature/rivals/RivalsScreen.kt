@@ -1,6 +1,7 @@
 package com.example.zcpc.feature.rivals
 
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,6 +21,8 @@ import com.example.zcpc.feature.profile.components.getRankColor
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.ui.platform.LocalContext
+import com.example.zcpc.core.util.openCustomTab
 
 @Composable
 fun RivalsRoute(
@@ -123,7 +126,8 @@ internal fun RivalsScreen(
                                 items(uiState.rivals, key = { it.handle }) { rival ->
                                     RivalCard(
                                         rival = rival,
-                                        onDelete = { onRemoveRival(rival) }
+                                        onDelete = { onRemoveRival(rival) },
+
                                     )
                                 }
                             }
@@ -142,9 +146,16 @@ private fun RivalCard(
     onDelete: () -> Unit
 ) {
     val rankColor = getRankColor(rival.rank)
+    val context = LocalContext.current
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                val url = "https://codeforces.com/profile/${rival.handle}"
+                openCustomTab(context, url)
+            }
+        ,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Row(
