@@ -1,6 +1,10 @@
 package com.example.zcpc.ui
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -10,6 +14,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -25,16 +30,32 @@ import com.example.zcpc.core.navigation.BottomNavItem
 import com.example.zcpc.core.navigation.Contests
 import com.example.zcpc.core.navigation.Problems
 import com.example.zcpc.core.navigation.Profile
+import com.example.zcpc.core.navigation.Rivals
 import com.example.zcpc.core.navigation.bottomNavItems
 import com.example.zcpc.feature.contests.ContestsRoute
 import com.example.zcpc.feature.problems.ProblemsRoute
 import com.example.zcpc.feature.profile.ProfileRoute
+import com.example.zcpc.feature.rivals.RivalsRoute
 
 @SuppressLint("RestrictedApi")
 @Composable
 fun MainScreen(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (!isGranted) {
 
+            }
+        }
+    )
+
+    // Trigger it when they try to add their first rival or open the screen
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
     Scaffold(
         modifier = modifier.fillMaxSize(),
         bottomBar = {
@@ -77,6 +98,9 @@ fun MainScreen(modifier: Modifier = Modifier) {
             }
             composable<Problems> {
                 ProblemsRoute()
+            }
+            composable<Rivals> {
+                RivalsRoute()
             }
 
         }

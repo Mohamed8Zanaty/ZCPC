@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.example.zcpc.data.local.AppDatabase
 import com.example.zcpc.data.local.dao.ContestDao
 import com.example.zcpc.data.local.dao.ProblemDao
+import com.example.zcpc.data.local.dao.RivalDao
 import com.example.zcpc.data.local.dao.UserDao
 import dagger.Module
 import dagger.Provides
@@ -43,5 +44,10 @@ object DatabaseModule {
     @Singleton
     fun provideProblemDao(appDatabase: AppDatabase): ProblemDao {
         return appDatabase.problemDao
+    }
+    @Provides
+    @Singleton
+    fun provideRivalDao(appDatabase: AppDatabase): RivalDao {
+        return appDatabase.rivalDao
     }
 }

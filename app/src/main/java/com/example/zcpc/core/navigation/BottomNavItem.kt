@@ -23,5 +23,10 @@ val bottomNavItems = listOf(
         title = "Problems",
         icon = R.drawable.list,
         route = Problems
+    ),
+    BottomNavItem(
+        title = "Rivals",
+        icon = R.drawable.rivals,
+        route = Rivals
     )
 )

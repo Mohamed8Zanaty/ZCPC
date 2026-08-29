@@ -5,22 +5,27 @@ import com.example.zcpc.core.network.safeApiCall
 import com.example.zcpc.data.codeforces.remote.CodeforcesApi
 import com.example.zcpc.data.local.dao.ContestDao
 import com.example.zcpc.data.local.dao.ProblemDao
+import com.example.zcpc.data.local.dao.RivalDao
 import com.example.zcpc.data.local.dao.UserDao
 import com.example.zcpc.data.local.entity.toDomain
 import com.example.zcpc.data.local.entity.toEntity
+import com.example.zcpc.data.local.entity.toRivalEntity
 import com.example.zcpc.data.mapper.toDomain
 import com.example.zcpc.domain.model.Contest
 import com.example.zcpc.domain.model.ContestPhase
 import com.example.zcpc.domain.model.SolvedProblem
 import com.example.zcpc.domain.model.UserProfile
 import com.example.zcpc.domain.repository.CodeforcesRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class CodeforcesRepositoryImpl @Inject constructor(
     private val api: CodeforcesApi,
     private val userDao: UserDao,
     private val contestDao: ContestDao,
-    private val problemDao: ProblemDao
+    private val problemDao: ProblemDao,
+    private val rivalDao: RivalDao
 ) : CodeforcesRepository {
     override suspend fun getUserProfile(handle: String): NetworkResult<UserProfile> {
         val networkResponse = safeApiCall { api.getUserInfo(handle) }
@@ -94,5 +99,35 @@ class CodeforcesRepositoryImpl @Inject constructor(
                 message = "No internet connection and no cached problems available."
             )
         }
+    }
+
+    override fun getRivalsFlow(): Flow<List<UserProfile>> {
+        return rivalDao.getAllRivalsFlow().map { entities ->
+            entities.map { it.toDomain() }
+        }
+    }
+
+    override suspend fun addRival(handle: String): NetworkResult<Unit> {
+        val response = safeApiCall { api.getUserInfo(handle) }
+
+        return when (response) {
+            is NetworkResult.Success -> {
+                val data = response.data
+                if (data.status == "OK" && !data.result.isNullOrEmpty()) {
+                    val dto = data.result.first()
+                    val profile = dto.toDomain()
+                    rivalDao.insertRival(profile.toRivalEntity())
+                    NetworkResult.Success(Unit)
+                } else {
+                    NetworkResult.Error(404, "Handle not found")
+                }
+            }
+            is NetworkResult.Error -> NetworkResult.Error(response.code, response.message)
+            is NetworkResult.Exception -> NetworkResult.Exception(response.e)
+        }
+    }
+
+    override suspend fun removeRival(profile: UserProfile) {
+        rivalDao.deleteRival(profile.toRivalEntity())
     }
 }
