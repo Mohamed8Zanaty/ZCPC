@@ -1,5 +1,8 @@
 package com.example.zcpc.feature.problems
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,6 +21,7 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -29,7 +33,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -132,6 +141,11 @@ private fun RatingBarChart(distribution: List<Pair<Int, Int>>) {
     if(distribution.isEmpty()) return
 
     val maxCount = distribution.maxOf { it.second }.coerceAtLeast(1)
+    var isAnimated by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        isAnimated = true
+    }
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
@@ -149,7 +163,18 @@ private fun RatingBarChart(distribution: List<Pair<Int, Int>>) {
             verticalAlignment = Alignment.Bottom,
             contentPadding = PaddingValues(horizontal = 8.dp)
         ) {
-            items(distribution) { (rating, count) ->
+            itemsIndexed(distribution) { index, (rating, count) ->
+                val targetFraction = (count.toFloat() / maxCount) * 0.8f
+
+                val animatedFraction by animateFloatAsState(
+                    targetValue = if(isAnimated) targetFraction else 0f,
+                    animationSpec = tween(
+                        durationMillis = 800,
+                        delayMillis = index * 40,
+                        easing = FastOutSlowInEasing
+                    ),
+                    label = "BarHeightAnimation"
+                )
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Bottom,
@@ -164,7 +189,7 @@ private fun RatingBarChart(distribution: List<Pair<Int, Int>>) {
                     Box(
                         modifier = Modifier
                             .width(36.dp)
-                            .fillMaxHeight(fraction = (count.toFloat() / maxCount) * 0.8f)
+                            .fillMaxHeight(fraction = animatedFraction)
                             .clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp))
                             .background(MaterialTheme.colorScheme.primary)
                     )
