@@ -3,10 +3,12 @@ package com.example.zcpc.data.local
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import com.example.zcpc.data.local.dao.ContestDao
+import com.example.zcpc.data.local.dao.NotificationDao
 import com.example.zcpc.data.local.dao.ProblemDao
 import com.example.zcpc.data.local.dao.RivalDao
 import com.example.zcpc.data.local.dao.UserDao
 import com.example.zcpc.data.local.entity.ContestEntity
+import com.example.zcpc.data.local.entity.NotificationEntity
 import com.example.zcpc.data.local.entity.RivalEntity
 import com.example.zcpc.data.local.entity.SolvedProblemEntity
 import com.example.zcpc.data.local.entity.UserEntity
@@ -16,9 +18,10 @@ import com.example.zcpc.data.local.entity.UserEntity
         UserEntity::class,
         ContestEntity::class,
         SolvedProblemEntity::class,
-        RivalEntity::class
+        RivalEntity::class,
+        NotificationEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -26,4 +29,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract val contestDao: ContestDao
     abstract val problemDao: ProblemDao
     abstract val rivalDao: RivalDao
+    abstract val notificationDao: NotificationDao
 }

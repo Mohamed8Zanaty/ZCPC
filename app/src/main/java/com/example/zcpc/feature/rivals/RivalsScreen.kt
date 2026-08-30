@@ -21,13 +21,15 @@ import com.example.zcpc.feature.profile.components.getRankColor
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.ui.platform.LocalContext
 import com.example.zcpc.core.util.openCustomTab
 
 @Composable
 fun RivalsRoute(
     modifier: Modifier = Modifier,
-    viewModel: RivalsViewModel = hiltViewModel()
+    viewModel: RivalsViewModel = hiltViewModel(),
+    onNavigateToNotifications: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -36,6 +38,7 @@ fun RivalsRoute(
         modifier = modifier,
         onAddRival = { viewModel.addRival(it) },
         onRemoveRival = { viewModel.removeRival(it) },
+        onNavigateToNotifications = onNavigateToNotifications,
         onClearError = { viewModel.clearError() }
     )
 }
@@ -47,6 +50,7 @@ internal fun RivalsScreen(
     modifier: Modifier = Modifier,
     onAddRival: (String) -> Unit,
     onRemoveRival: (UserProfile) -> Unit,
+    onNavigateToNotifications: () -> Unit,
     onClearError: () -> Unit
 ) {
     var searchInput by remember { mutableStateOf("") }
@@ -54,7 +58,21 @@ internal fun RivalsScreen(
 
     Scaffold(
         modifier = modifier,
-        topBar = { TopAppBar(title = { Text("Rivals & Friends") }) },
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text("Rivals & Friends")
+                },
+                actions = {
+                    IconButton(onClick = onNavigateToNotifications) {
+                        Icon(
+                            imageVector = Icons.Default.Notifications,
+                            contentDescription = "Notifications"
+                        )
+                    }
+                }
+            )
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
         Box(

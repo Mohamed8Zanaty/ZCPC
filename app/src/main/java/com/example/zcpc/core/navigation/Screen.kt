@@ -17,3 +17,4 @@ data object MainGraph
 @Serializable
 data object Problems
 @Serializable data object Rivals
+@Serializable data object Notifications

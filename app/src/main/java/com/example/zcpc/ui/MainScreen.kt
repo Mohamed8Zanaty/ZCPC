@@ -28,11 +28,14 @@ import androidx.navigation.compose.rememberNavController
 import androidx.savedstate.savedState
 import com.example.zcpc.core.navigation.BottomNavItem
 import com.example.zcpc.core.navigation.Contests
+import com.example.zcpc.core.navigation.Notifications
 import com.example.zcpc.core.navigation.Problems
 import com.example.zcpc.core.navigation.Profile
 import com.example.zcpc.core.navigation.Rivals
 import com.example.zcpc.core.navigation.bottomNavItems
 import com.example.zcpc.feature.contests.ContestsRoute
+import com.example.zcpc.feature.notifications.NotificationsScreen
+import com.example.zcpc.feature.notifications.NotificationsViewModel
 import com.example.zcpc.feature.problems.ProblemsRoute
 import com.example.zcpc.feature.profile.ProfileRoute
 import com.example.zcpc.feature.rivals.RivalsRoute
@@ -100,9 +103,15 @@ fun MainScreen(modifier: Modifier = Modifier) {
                 ProblemsRoute()
             }
             composable<Rivals> {
-                RivalsRoute()
+                RivalsRoute(
+                    onNavigateToNotifications = {
+                        navController.navigate(Notifications)
+                    }
+                )
             }
-
+            composable<Notifications> {
+                NotificationsScreen()
+            }
         }
     }
 }
