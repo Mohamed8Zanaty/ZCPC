@@ -55,6 +55,7 @@ internal fun RivalsScreen(
 ) {
     var searchInput by remember { mutableStateOf("") }
     val snackbarHostState = remember { SnackbarHostState() }
+    var selectedRivalHandle by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
         modifier = modifier,
@@ -88,6 +89,15 @@ internal fun RivalsScreen(
                             snackbarHostState.showSnackbar(it)
                             onClearError()
                         }
+                    }
+
+                    if (selectedRivalHandle != null) {
+                        val failedProblems = uiState.rivalsFailedProblems[selectedRivalHandle] ?: emptyList()
+                        RivalFailedProblemsDialog(
+                            handle = selectedRivalHandle!!,
+                            problems = failedProblems,
+                            onDismiss = { selectedRivalHandle = null }
+                        )
                     }
 
                     Column(
@@ -142,10 +152,12 @@ internal fun RivalsScreen(
                                 modifier = Modifier.fillMaxSize()
                             ) {
                                 items(uiState.rivals, key = { it.handle }) { rival ->
+                                    val failedCount = uiState.rivalsFailedProblems[rival.handle]?.size ?: 0
                                     RivalCard(
                                         rival = rival,
+                                        failedCount = failedCount,
                                         onDelete = { onRemoveRival(rival) },
-
+                                        onShowFailed = { selectedRivalHandle = rival.handle }
                                     )
                                 }
                             }
@@ -161,7 +173,9 @@ internal fun RivalsScreen(
 @Composable
 private fun RivalCard(
     rival: UserProfile,
-    onDelete: () -> Unit
+    failedCount: Int,
+    onDelete: () -> Unit,
+    onShowFailed: () -> Unit
 ) {
     val rankColor = getRankColor(rival.rank)
     val context = LocalContext.current
@@ -204,6 +218,14 @@ private fun RivalCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                if (failedCount > 0) {
+                    Text(
+                        text = "$failedCount unsolved problems",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.clickable { onShowFailed() }
+                    )
+                }
             }
 
             IconButton(onClick = onDelete) {
@@ -215,4 +237,63 @@ private fun RivalCard(
             }
         }
     }
+}
+
+@Composable
+private fun RivalFailedProblemsDialog(
+    handle: String,
+    problems: List<com.example.zcpc.domain.model.Submission>,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "$handle's Unsolved Problems",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            if (problems.isEmpty()) {
+                Text("No unsolved problems found.")
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(problems) { problem ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth().clickable {
+                                if (problem.contestId != null) {
+                                    val url = "https://codeforces.com/problemset/problem/${problem.contestId}/${problem.index}"
+                                    openCustomTab(context, url)
+                                }
+                            },
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f))
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text(
+                                    text = problem.name,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "${problem.contestId}${problem.index} - ${problem.verdict}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
 }
