@@ -133,6 +133,52 @@ internal fun ProblemsScreen(
                                 }
                             }
 
+                            // Failed Problems Section
+                            if (uiState.failedProblems.isNotEmpty()) {
+                                item(span = { GridItemSpan(maxLineSpan) }) {
+                                    Column {
+                                        Spacer(modifier = Modifier.height(24.dp))
+                                        Text(
+                                            "Failed Attempts (Unsolved)",
+                                            style = MaterialTheme.typography.titleLarge,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.error
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                    }
+                                }
+
+                                items(uiState.failedProblems) { problem ->
+                                    Card(
+                                        modifier = Modifier.clickable {
+                                            if (problem.contestId != null) {
+                                                val url = "https://codeforces.com/problemset/problem/${problem.contestId}/${problem.index}"
+                                                openCustomTab(context, url)
+                                            } else {
+                                                val query = "Codeforces ${problem.name}"
+                                                val url = "https://www.google.com/search?q=${query.replace(" ", "+")}"
+                                                openCustomTab(context, url)
+                                            }
+                                        },
+                                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f))
+                                    ) {
+                                        Column(modifier = Modifier.padding(16.dp)) {
+                                            Text(
+                                                text = problem.name,
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                fontWeight = FontWeight.Bold,
+                                                maxLines = 1
+                                            )
+                                            Text(
+                                                text = "${problem.contestId}${problem.index} - ${problem.verdict}",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.error
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
                             // Topics Title
                             item(span = { GridItemSpan(maxLineSpan) }) {
                                 Column {

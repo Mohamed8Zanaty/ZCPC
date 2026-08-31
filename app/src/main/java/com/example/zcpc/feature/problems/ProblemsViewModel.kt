@@ -32,104 +32,74 @@ class ProblemsViewModel @Inject constructor(
     }
 
     fun loadProblems(handle: String) {
-        _uiState.update { ProblemsUiState.Loading }
+        _uiState.update { 
+            if (it is ProblemsUiState.Success) it.copy(isRefreshing = true) else ProblemsUiState.Loading 
+        }
         viewModelScope.launch {
-            when(val result = repository.getSolvedProblems(handle)) {
-                is NetworkResult.Success -> {
-                    val problems = result.data
+            val solvedResult = repository.getSolvedProblems(handle)
+            val submissionsResult = repository.getSubmissions(handle)
 
-                    val tagFrequencies = problems
-                        .flatMap { it.tags }
-                        .groupingBy { it }
-                        .eachCount()
-                        .toList()
-                        .sortedByDescending { it.second }
+            if (solvedResult is NetworkResult.Success && submissionsResult is NetworkResult.Success) {
+                val solvedProblems = solvedResult.data
+                val allSubmissions = submissionsResult.data
 
-                    val ratingDist = problems
-                        .filter { it.rating > 0 }
-                        .groupingBy { it.rating }
-                        .eachCount()
-                        .toList()
-                        .sortedBy { it.first }
+                val solvedProblemNames = solvedProblems.map { it.name }.toSet()
+                val failedProblems = allSubmissions
+                    .filter { it.verdict != "OK" && it.verdict != "TESTING" && it.name !in solvedProblemNames }
+                    .distinctBy { it.name }
 
-                    val groupedByTag = mutableMapOf<String, MutableList<SolvedProblem>>()
-                    problems.forEach { problem ->
-                        problem.tags.forEach { tag ->
-                            groupedByTag.getOrPut(tag) { mutableListOf() }.add(problem)
-                        }
+                val tagFrequencies = solvedProblems
+                    .flatMap { it.tags }
+                    .groupingBy { it }
+                    .eachCount()
+                    .toList()
+                    .sortedByDescending { it.second }
+
+                val ratingDist = solvedProblems
+                    .filter { it.rating > 0 }
+                    .groupingBy { it.rating }
+                    .eachCount()
+                    .toList()
+                    .sortedBy { it.first }
+
+                val groupedByTag = mutableMapOf<String, MutableList<SolvedProblem>>()
+                solvedProblems.forEach { problem ->
+                    problem.tags.forEach { tag ->
+                        groupedByTag.getOrPut(tag) { mutableListOf() }.add(problem)
                     }
-                    val sortedProblemsByTag = groupedByTag.mapValues { (_, problemList) ->
-                        problemList.sortedByDescending { it.rating }
-                    }
-                    _uiState.update {
-                        ProblemsUiState.Success(
-                            totalSolved = problems.size,
-                            tagCounts = tagFrequencies,
-                            ratingDistribution = ratingDist,
-                            problemsByTag = sortedProblemsByTag
-                        )
-                    }
-
                 }
-                is NetworkResult.Error -> _uiState.update { ProblemsUiState.Error(result.message) }
-                is NetworkResult.Exception -> _uiState.update { ProblemsUiState.Error(result.e.localizedMessage ?: "Error") }
+                val sortedProblemsByTag = groupedByTag.mapValues { (_, problemList) ->
+                    problemList.sortedByDescending { it.rating }
+                }
+
+                _uiState.update {
+                    ProblemsUiState.Success(
+                        totalSolved = solvedProblems.size,
+                        tagCounts = tagFrequencies,
+                        ratingDistribution = ratingDist,
+                        problemsByTag = sortedProblemsByTag,
+                        failedProblems = failedProblems,
+                        isRefreshing = false
+                    )
+                }
+            } else {
+                val errorMessage = when {
+                    solvedResult is NetworkResult.Error -> solvedResult.message
+                    submissionsResult is NetworkResult.Error -> submissionsResult.message
+                    solvedResult is NetworkResult.Exception -> solvedResult.e.localizedMessage
+                    submissionsResult is NetworkResult.Exception -> submissionsResult.e.localizedMessage
+                    else -> "Unknown error"
+                } ?: "Error"
+                _uiState.update { ProblemsUiState.Error(errorMessage) }
             }
         }
     }
 
     fun refreshProblems() {
-        val currentState = _uiState.value
-
-        if (currentState is ProblemsUiState.Success) {
-            if (currentState.isRefreshing) return
-            _uiState.update { currentState.copy(isRefreshing = true) }
-        } else {
-            _uiState.update { ProblemsUiState.Loading }
-        }
-
         viewModelScope.launch {
             val handle = userPreferences.userHandleFlow.first()
-            if (handle.isNullOrBlank()) return@launch
-
-            when (val result = repository.getSolvedProblems(handle)) {
-                is NetworkResult.Success -> {
-                    val problems = result.data
-
-                    val tagFrequencies = problems
-                        .flatMap { it.tags }
-                        .groupingBy { it }
-                        .eachCount()
-                        .toList()
-                        .sortedByDescending { it.second }
-
-                    val ratingDist = problems
-                        .filter { it.rating > 0 }
-                        .groupingBy { it.rating }
-                        .eachCount()
-                        .toList()
-                        .sortedBy { it.first }
-
-                    val groupedByTag = mutableMapOf<String, MutableList<SolvedProblem>>()
-                    problems.forEach { problem ->
-                        problem.tags.forEach { tag ->
-                            groupedByTag.getOrPut(tag) { mutableListOf() }.add(problem)
-                        }
-                    }
-                    val sortedProblemsByTag = groupedByTag.mapValues { (_, problemList) ->
-                        problemList.sortedByDescending { it.rating }
-                    }
-                    _uiState.update {
-                        ProblemsUiState.Success(
-                            totalSolved = problems.size,
-                            tagCounts = tagFrequencies,
-                            ratingDistribution = ratingDist,
-                            problemsByTag = sortedProblemsByTag,
-                            isRefreshing = false // Turn off the spinner
-                        )
-                    }
-                }
-                is NetworkResult.Error -> _uiState.update { ProblemsUiState.Error(result.message) }
-                is NetworkResult.Exception -> _uiState.update { ProblemsUiState.Error(result.e.localizedMessage ?: "Error") }
+            if (!handle.isNullOrBlank()) {
+                loadProblems(handle)
             }
         }
     }

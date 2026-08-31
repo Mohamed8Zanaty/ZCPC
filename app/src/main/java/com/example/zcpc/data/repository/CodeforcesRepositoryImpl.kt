@@ -14,6 +14,7 @@ import com.example.zcpc.data.mapper.toDomain
 import com.example.zcpc.domain.model.Contest
 import com.example.zcpc.domain.model.ContestPhase
 import com.example.zcpc.domain.model.SolvedProblem
+import com.example.zcpc.domain.model.Submission
 import com.example.zcpc.domain.model.UserProfile
 import com.example.zcpc.domain.repository.CodeforcesRepository
 import kotlinx.coroutines.flow.Flow
@@ -98,6 +99,22 @@ class CodeforcesRepositoryImpl @Inject constructor(
                 code = 503,
                 message = "No internet connection and no cached problems available."
             )
+        }
+    }
+
+    override suspend fun getSubmissions(handle: String): NetworkResult<List<Submission>> {
+        val response = safeApiCall { api.getUserStatus(handle) }
+
+        return if (response is NetworkResult.Success) {
+            val data = response.data
+            if (data.status == "OK" && data.result != null) {
+                NetworkResult.Success(data.result.map { it.toDomain() })
+            } else {
+                NetworkResult.Error(code = 404, message = "User not found or no submissions.")
+            }
+        } else {
+            // We could cache submissions too, but for now let's just return error if offline
+            NetworkResult.Error(code = 503, message = "No internet connection.")
         }
     }
 
