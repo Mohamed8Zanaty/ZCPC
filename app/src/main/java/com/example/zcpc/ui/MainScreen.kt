@@ -2,6 +2,7 @@ package com.example.zcpc.ui
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -42,8 +43,26 @@ import com.example.zcpc.feature.rivals.RivalsRoute
 
 @SuppressLint("RestrictedApi")
 @Composable
-fun MainScreen(modifier: Modifier = Modifier) {
+fun MainScreen(
+    modifier: Modifier = Modifier,
+    intent: Intent? = null,
+    onIntentHandled: () -> Unit = {}
+) {
     val navController = rememberNavController()
+
+    LaunchedEffect(intent) {
+        val navigateTo = intent?.getStringExtra("navigate_to")
+        if (navigateTo == "notifications") {
+            navController.navigate(Notifications) {
+                popUpTo(navController.graph.findStartDestination().id) {
+                    saveState = true
+                }
+                launchSingleTop = true
+                restoreState = true
+            }
+            onIntentHandled()
+        }
+    }
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { isGranted ->

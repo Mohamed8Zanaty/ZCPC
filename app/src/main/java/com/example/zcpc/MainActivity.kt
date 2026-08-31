@@ -1,5 +1,6 @@
 package com.example.zcpc
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,6 +14,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
@@ -34,9 +37,13 @@ import javax.inject.Inject
 class MainActivity : ComponentActivity() {
     @Inject
     lateinit var userPreferences: UserPreferences
+
+    private var currentIntent by mutableStateOf<Intent?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        currentIntent = intent
         setContent {
             val handle by userPreferences.userHandleFlow.collectAsState(initial = null)
             val appTheme by userPreferences.appThemeFlow.collectAsState(initial = AppTheme.SYSTEM)
@@ -60,10 +67,20 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                     else -> {
-                        MainScreen()
+                        MainScreen(
+                            intent = currentIntent,
+                            onIntentHandled = {
+                                currentIntent = null
+                            }
+                        )
                     }
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        currentIntent = intent
     }
 }
